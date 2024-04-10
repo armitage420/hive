@@ -138,16 +138,16 @@ public class TestThriftHttpCLIServiceFeatures  {
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     // Set up the base class
-    ThriftCLIServiceTest.setUpBeforeClass();
+    ServiceTestUtils.setUpBeforeClass();
 
-    assertNotNull(ThriftCLIServiceTest.port);
-    assertNotNull(ThriftCLIServiceTest.hiveServer2);
-    assertNotNull(ThriftCLIServiceTest.hiveConf);
-    HiveConf hiveConf = ThriftCLIServiceTest.hiveConf;
+    assertNotNull(ServiceTestUtils.port);
+    assertNotNull(ServiceTestUtils.hiveServer2);
+    assertNotNull(ServiceTestUtils.hiveConf);
+    HiveConf hiveConf = ServiceTestUtils.hiveConf;
 
     hiveConf.setBoolVar(ConfVars.HIVE_SERVER2_ENABLE_DOAS, false);
-    hiveConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_BIND_HOST, ThriftCLIServiceTest.host);
-    hiveConf.setIntVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_PORT, ThriftCLIServiceTest.port);
+    hiveConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_BIND_HOST, ServiceTestUtils.host);
+    hiveConf.setIntVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_PORT, ServiceTestUtils.port);
     hiveConf.setVar(ConfVars.HIVE_SERVER2_AUTHENTICATION, HiveAuthConstants.AuthTypes.NOSASL.toString());
     hiveConf.setVar(ConfVars.HIVE_SERVER2_TRANSPORT_MODE, transportMode);
     hiveConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_PATH, thriftHttpPath);
@@ -157,9 +157,9 @@ public class TestThriftHttpCLIServiceFeatures  {
     hiveConf.setVar(ConfVars.HIVE_AUTHENTICATOR_MANAGER, SessionStateUserAuthenticator.class.getName());
     hiveConf.setBoolVar(ConfVars.HIVE_AUTHORIZATION_ENABLED, true);
 
-    ThriftCLIServiceTest.startHiveServer2WithConf(hiveConf);
+    ServiceTestUtils.startHiveServer2WithConf(hiveConf);
 
-    ThriftCLIServiceTest.client = ThriftCLIServiceTest.getServiceClientInternal();
+    ServiceTestUtils.client = ThriftCLIServiceTest.getServiceClientInternal();
   }
 
   /**
@@ -225,21 +225,21 @@ public class TestThriftHttpCLIServiceFeatures  {
   }
 
   private TTransport getRawBinaryTransport() throws Exception {
-    return HiveAuthUtils.getSocketTransport(ThriftCLIServiceTest.host, ThriftCLIServiceTest.port, 0);
+    return HiveAuthUtils.getSocketTransport(ServiceTestUtils.host, ServiceTestUtils.port, 0);
   }
 
   private static TTransport getHttpTransport() throws Exception {
     DefaultHttpClient httpClient = new DefaultHttpClient();
     String httpUrl = getHttpUrl();
     httpClient.addRequestInterceptor(
-        new HttpBasicAuthInterceptor(ThriftCLIServiceTest.USERNAME, ThriftCLIServiceTest.PASSWORD,
+        new HttpBasicAuthInterceptor(ServiceTestUtils.USERNAME, ServiceTestUtils.PASSWORD,
             null, null, false, null, null));
     return new THttpClient(httpUrl, httpClient);
   }
 
   private static String getHttpUrl() {
-    return transportMode + "://" + ThriftCLIServiceTest.host + ":"
-        + ThriftCLIServiceTest.port +
+    return transportMode + "://" + ServiceTestUtils.host + ":"
+        + ServiceTestUtils.port +
         "/" + thriftHttpPath + "/";
   }
 
@@ -292,7 +292,7 @@ public class TestThriftHttpCLIServiceFeatures  {
     DefaultHttpClient hClient = new DefaultHttpClient();
     String httpUrl = getHttpUrl();
     HttpBasicAuthInterceptorWithLogging authInt =
-      new HttpBasicAuthInterceptorWithLogging(ThriftCLIServiceTest.USERNAME, ThriftCLIServiceTest.PASSWORD, null, null,
+      new HttpBasicAuthInterceptorWithLogging(ServiceTestUtils.USERNAME, ServiceTestUtils.PASSWORD, null, null,
       false, additionalHeaders, cookieHeaders);
     hClient.addRequestInterceptor(authInt);
     transport = new THttpClient(httpUrl, hClient);
@@ -342,8 +342,8 @@ public class TestThriftHttpCLIServiceFeatures  {
     }
 
     // interceptor for adding username, pwd
-    HttpBasicAuthInterceptor authInt = new HttpBasicAuthInterceptor(ThriftCLIServiceTest.USERNAME,
-        ThriftCLIServiceTest.PASSWORD, null, null,
+    HttpBasicAuthInterceptor authInt = new HttpBasicAuthInterceptor(ServiceTestUtils.USERNAME,
+            ServiceTestUtils.PASSWORD, null, null,
         false, null, null);
     hClient.addRequestInterceptor(authInt);
 
