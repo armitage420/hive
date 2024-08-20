@@ -18,11 +18,14 @@
 
 package org.apache.hadoop.hive.ql.ddl.table.partition.exchange;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import jline.internal.Log;
 import org.apache.hadoop.hive.common.TableName;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.*;
+import org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryState;
@@ -35,11 +38,13 @@ import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity.WriteType;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.HiveParser;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.thrift.TException;
 
 /**
  * Analyzer for exchange partition commands.
@@ -79,7 +84,23 @@ public  class AlterTableExchangePartitionAnalyzer extends AbstractAlterTableAnal
     }
 
     // check if source partition exists
-    PartitionUtils.getPartitions(db, sourceTable, partitionSpecs, true);
+    List<String> projectFields = Arrays.asList("dbName", "tableName", "createTime", "lastAccessTime", "sd.location");
+    List<String> projectFilters = MetaStoreUtils.getPvals(sourceTable.getPartCols(), partitionSpecs);
+
+    GetPartitionsRequest request = new GetPartitionsRequest(sourceTable.getDbName(), sourceTable.getTableName(),
+            null, null);
+    request.setCatName(sourceTable.getCatName());
+    request.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
+            .addProjectField("dbName").addProjectField("tableName").addProjectField("createTime")
+            .addProjectField("lastAccessTime").addProjectField("sd.location").build());
+    GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
+    getPartitionsFilterSpec.setFilters(projectFilters);
+    request.setFilterSpec(getPartitionsFilterSpec);
+    try {
+      db.getPartitionsWithSpecs(sourceTable, request);
+    } catch (HiveException | TException ex) {
+
+    }
 
     // Verify that the partitions specified are continuous
     // If a subpartition value is specified without specifying a partition's value then we throw an exception
@@ -90,11 +111,23 @@ public  class AlterTableExchangePartitionAnalyzer extends AbstractAlterTableAnal
 
     List<Partition> destPartitions = null;
     try {
-      destPartitions = PartitionUtils.getPartitions(db, destTable, partitionSpecs, true);
+      GetPartitionsRequest destRequest = new GetPartitionsRequest(destTable.getDbName(), destTable.getTableName(),
+              null, null);
+      destRequest.setCatName(sourceTable.getCatName());
+      destRequest.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
+              .addProjectField("dbName").addProjectField("tableName").addProjectField("createTime")
+              .addProjectField("lastAccessTime").addProjectField("sd.location").build());
+      GetPartitionsFilterSpec getPartitionsFilterSpec1 = new GetPartitionsFilterSpec();
+      getPartitionsFilterSpec1.setFilters(projectFilters);
+      destRequest.setFilterSpec(getPartitionsFilterSpec1);
+      destPartitions = db.getPartitionsWithSpecs(destTable, destRequest);
     } catch (SemanticException ex) {
       // We should expect a semantic exception being throw as this partition should not be present.
+    }catch (HiveException | TException ex) {
+
     }
-    if (destPartitions != null) {
+
+    if (destPartitions != null && !destPartitions.isEmpty()) {
       // If any destination partition is present then throw a Semantic Exception.
       throw new SemanticException(ErrorMsg.PARTITION_EXISTS.getMsg(destPartitions.toString()));
     }

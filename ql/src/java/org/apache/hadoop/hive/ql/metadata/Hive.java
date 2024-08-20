@@ -4387,7 +4387,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
   }
 
   public List<Partition> getPartitionsWithSpecs(Table tbl, GetPartitionsRequest request)
-    throws HiveException, MetaException, NoSuchObjectException, TException {
+    throws HiveException, TException {
 
     if (!tbl.isPartitioned()) {
       throw new HiveException(ErrorMsg.TABLE_NOT_PARTITIONED, tbl.getTableName());
