@@ -84,6 +84,7 @@ import javax.jdo.JDODataStoreException;
 
 import com.google.common.collect.ImmutableList;
 
+import jline.internal.Log;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -1034,6 +1035,7 @@ public class Hive {
         if (tableSnapshot != null) {
           newPart.getTPartition().setWriteId(tableSnapshot.getWriteId());
         } else {
+          Log.info("Cannot get a table snapshot for " + tblName);
           LOG.warn("Cannot get a table snapshot for " + tblName);
         }
       }

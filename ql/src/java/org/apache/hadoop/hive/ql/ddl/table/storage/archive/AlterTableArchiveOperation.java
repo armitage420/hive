@@ -18,7 +18,12 @@
 
 package org.apache.hadoop.hive.ql.ddl.table.storage.archive;
 
+import jline.internal.Log;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsFilterSpec;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
+import org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder;
+import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 import org.apache.hadoop.hive.ql.ddl.DDLOperationContext;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils;
 import org.apache.hadoop.hive.ql.exec.Utilities;
@@ -46,6 +51,7 @@ import org.apache.hadoop.tools.HadoopArchives;
 import org.apache.hadoop.util.ToolRunner;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.thrift.TException;
 
 /**
  * Operation process of archiving a table.
@@ -56,15 +62,29 @@ public class AlterTableArchiveOperation extends DDLOperation<AlterTableArchiveDe
   }
 
   @Override
-  public int execute() throws HiveException {
+  public int execute() throws HiveException, TException {
     Table table = context.getDb().getTable(desc.getTableName());
     if (table.getTableType() != TableType.MANAGED_TABLE) {
       throw new HiveException("ARCHIVE can only be performed on managed tables");
     }
 
     Map<String, String> partitionSpec = desc.getPartitionSpec();
+    List<String> partitionSpecList = MetaStoreUtils.getPvals(table.getPartCols(), partitionSpec);
     PartSpecInfo partitionSpecInfo = PartSpecInfo.create(table, partitionSpec);
-    List<Partition> partitions = context.getDb().getPartitions(table, partitionSpec);
+
+
+    GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(),
+            null, null);
+    request.setCatName(table.getCatName());
+    request.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
+            .addProjectField("dbName").addProjectField("tableName").addProjectField("catName")
+            .addProjectField("parameters").addProjectField("values").addProjectField("sd.location")
+            .addProjectField("writeId").build());
+    GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
+    getPartitionsFilterSpec.setFilters(partitionSpecList);
+    request.setFilterSpec(getPartitionsFilterSpec);
+//    List<Partition> partitions = context.getDb().getPartitions(table, partitionSpec);
+    List<Partition> partitions = context.getDb().getPartitionsWithSpecs(table, request);
 
     Path originalDir = getOriginalDir(table, partitionSpecInfo, partitions);
     Path intermediateArchivedDir = AlterTableArchiveUtils.getInterMediateDir(originalDir, context.getConf(),
@@ -271,11 +291,16 @@ public class AlterTableArchiveOperation extends DDLOperation<AlterTableArchiveDe
 
       for (Partition partition : partitions) {
         URI originalPartitionUri = ArchiveUtils.addSlash(partition.getDataLocation().toUri());
+        Log.info("originalPartitionUri ", originalPartitionUri);
         URI harPartitionDir = harHelper.getHarUri(originalPartitionUri);
+        Log.info("harPartitionDir ", harPartitionDir);
         StringBuilder authority = new StringBuilder();
+        Log.info("harPartitionDir.getUserInfo() ", harPartitionDir.getUserInfo());
+        Log.info("harPartitionDir.getUserInfo()2 ", harPartitionDir.getUserInfo());
         if (harPartitionDir.getUserInfo() != null) {
           authority.append(harPartitionDir.getUserInfo()).append("@");
         }
+        Log.info("harPartitionDir.getHost() ", harPartitionDir.getHost());
         authority.append(harPartitionDir.getHost());
         if (harPartitionDir.getPort() != -1) {
           authority.append(":").append(harPartitionDir.getPort());
@@ -283,6 +308,7 @@ public class AlterTableArchiveOperation extends DDLOperation<AlterTableArchiveDe
 
         // make in Path to ensure no slash at the end
         Path harPath = new Path(harPartitionDir.getScheme(), authority.toString(), harPartitionDir.getPath());
+        Log.info("harPath ", harPath);
         setArchived(partition, harPath, partitionSpecInfo.values.size());
         // TODO: catalog
         context.getDb().alterPartition(desc.getTableName(), partition, null, true);
