@@ -19,6 +19,10 @@
 package org.apache.hadoop.hive.ql.ddl.table.storage.archive;
 
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsFilterSpec;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
+import org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder;
+import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 import org.apache.hadoop.hive.ql.ddl.DDLOperationContext;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils.PartSpecInfo;
@@ -45,6 +49,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
+import org.apache.thrift.TException;
 
 /**
  * Operation process of truncating a table.
@@ -55,19 +60,32 @@ public class AlterTableUnarchiveOperation extends DDLOperation<AlterTableUnarchi
   }
 
   @Override
-  public int execute() throws HiveException, URISyntaxException {
+  public int execute() throws HiveException, URISyntaxException, TException {
     Table table = context.getDb().getTable(desc.getTableName());
     if (table.getTableType() != TableType.MANAGED_TABLE) {
       throw new HiveException("UNARCHIVE can only be performed on managed tables");
     }
 
     Map<String, String> partitionSpec = desc.getPartitionSpec();
+    List<String> partitionSpecsList = MetaStoreUtils.getPvals(table.getPartCols(), partitionSpec);
     if (partitionSpec == null) {
       throw new HiveException("UNARCHIVE is for partitions only");
     }
 
     PartSpecInfo partitionSpecInfo = PartSpecInfo.create(table, partitionSpec);
-    List<Partition> partitions = context.getDb().getPartitions(table, partitionSpec);
+//    List<Partition> partitions = context.getDb().getPartitions(table, partitionSpec);
+
+    GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(),
+            null, null);
+    request.setCatName(table.getCatName());
+    request.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
+            .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+            .addProjectField("parameters").addProjectField("values").addProjectField("sd.location")
+            .addProjectField("writeId").build());
+    GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
+    getPartitionsFilterSpec.setFilters(partitionSpecsList);
+    request.setFilterSpec(getPartitionsFilterSpec);
+    List<Partition> partitions = context.getDb().getPartitionsWithSpecs(table, request);
 
     // The originalDir directory represents the original directory of the partitions' files. They now contain an
     // archived version of those files eg. hdfs:/warehouse/myTable/ds=1/
