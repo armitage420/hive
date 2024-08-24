@@ -27,7 +27,9 @@ import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.Constants;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
+import org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder;
 import org.apache.hadoop.hive.metastore.messaging.event.filters.DatabaseAndTableFilter;
 import org.apache.hadoop.hive.metastore.utils.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
@@ -398,6 +400,13 @@ public class OptimisedBootstrapUtils {
     // listing as well.
     if (table.isPartitioned()) {
       List<Partition> partitions = hiveDb.getPartitions(table);
+//      GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(), null, null);
+//      request.setCatName(table.getCatName());
+//      request.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
+//              .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+//              .addProjectField("sd.location").build());
+//      List<Partition> partitions = hiveDb.getPartitionsWithSpecs(table, request);
+
       for (Partition part : partitions) {
         Path partPath = part.getDataLocation();
         // Build listing for the partition only if it doesn't lies within the table location, else it would have been

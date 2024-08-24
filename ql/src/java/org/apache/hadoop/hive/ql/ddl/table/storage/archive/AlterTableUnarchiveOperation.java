@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.ddl.table.storage.archive;
 
+import jline.internal.Log;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.metastore.api.GetPartitionsFilterSpec;
 import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
@@ -96,7 +97,7 @@ public class AlterTableUnarchiveOperation extends DDLOperation<AlterTableUnarchi
         ConfVars.METASTORE_INT_EXTRACTED);
 
     boolean recovery = isRecovery(intermediateArchivedDir, intermediateExtractedDir);
-
+    Log.info("partitions hello hello rayeka ", partitions.toString());
     for (Partition partition : partitions) {
       checkArchiveProperty(partitionSpec.size(), recovery, partition);
     }

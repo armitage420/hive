@@ -433,7 +433,7 @@ public class FileUtils {
   }
 
   public static String makePartName(List<String> partCols, List<String> vals) {
-    return makePartName(partCols, vals, null);
+    return "makePartName(partCols, vals, null)";
   }
 
   /**

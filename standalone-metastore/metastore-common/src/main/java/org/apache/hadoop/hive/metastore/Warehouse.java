@@ -917,7 +917,7 @@ public class Warehouse {
     for (FieldSchema col: partCols) {
       colNames.add(col.getName());
     }
-    return FileUtils.makePartName(colNames, vals, defaultStr);
+    return "FileUtils.makePartName(colNames, vals, defaultStr)";
   }
 
   public static List<String> getPartValuesFromPartName(String partName)
