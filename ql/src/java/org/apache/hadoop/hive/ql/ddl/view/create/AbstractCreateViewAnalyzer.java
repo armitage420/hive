@@ -24,6 +24,7 @@ import java.util.Map;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryState;
 import org.apache.hadoop.hive.ql.exec.TableScanOperator;
@@ -37,6 +38,7 @@ import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.SemanticAnalyzerFactory;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.PlanUtils;
+import org.apache.thrift.TException;
 
 /**
  * Abstract ancestor of analyzers that can create a view.
@@ -113,8 +115,15 @@ public abstract class AbstractCreateViewAnalyzer extends BaseSemanticAnalyzer {
     String partitionViewErrorMsg = "The following view has partition, it could not be replaced: " + viewName;
     List<Partition> partitions = null;
     try {
-      partitions = db.getPartitions(oldView);
-    } catch (HiveException e) {
+//      partitions = db.getPartitions(oldView);
+      GetPartitionsRequest request = new GetPartitionsRequest(oldView.getDbName(),
+              oldView.getTableName(), null, null);
+      request.setCatName(oldView.getCatName());
+      request.setProjectionSpec(new org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder()
+              .addProjectField("dbName").addProjectField("tableName").addProjectField("catName")
+              .addProjectField("values").build());
+      partitions = db.getPartitionsWithSpecs(oldView, request);
+    } catch (HiveException | TException e) {
       throw new SemanticException(ErrorMsg.REPLACE_VIEW_WITH_PARTITION.getMsg(partitionViewErrorMsg));
     }
 
