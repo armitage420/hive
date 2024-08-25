@@ -43,7 +43,6 @@
         <exclude>org.apache.hadoop:*</exclude>
         <exclude>org.apache.hive.hcatalog:*</exclude>
         <exclude>org.slf4j:*</exclude>
-        <exclude>log4j:*</exclude>
         <exclude>ch.qos.reload4j:*</exclude>
         <exclude>junit:*</exclude>
         <exclude>commons-configuration:commons-configuration</exclude>
