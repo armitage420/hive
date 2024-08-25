@@ -57,6 +57,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.thrift.TException;
 
 import static org.apache.hadoop.hive.ql.parse.ReplicationSpec.getLastReplicatedStateFromParameters;
 import static org.apache.hadoop.hive.ql.parse.ReplicationSpec.getTargetLastReplicatedStateFromParameters;
@@ -384,7 +385,7 @@ public class OptimisedBootstrapUtils {
   }
 
   private static ArrayList<String> getListing(String dbName, String tableName, Hive hiveDb, HiveConf conf)
-      throws HiveException, IOException {
+      throws HiveException, IOException, TException {
     ArrayList<String> paths = new ArrayList<>();
     Table table = hiveDb.getTable(dbName, tableName, false);
     if (table == null) {
@@ -399,13 +400,13 @@ public class OptimisedBootstrapUtils {
     // Check if the table is partitioned, in case the table is partitioned we need to check for the partitions
     // listing as well.
     if (table.isPartitioned()) {
-      List<Partition> partitions = hiveDb.getPartitions(table);
-//      GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(), null, null);
-//      request.setCatName(table.getCatName());
-//      request.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
-//              .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
-//              .addProjectField("sd.location").build());
-//      List<Partition> partitions = hiveDb.getPartitionsWithSpecs(table, request);
+//      List<Partition> partitions = hiveDb.getPartitions(table);
+      GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(), null, null);
+      request.setCatName(table.getCatName());
+      request.setProjectionSpec(new GetPartitionProjectionsSpecBuilder()
+              .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+              .addProjectField("sd.location").build());
+      List<Partition> partitions = hiveDb.getPartitionsWithSpecs(table, request);
 
       for (Partition part : partitions) {
         Path partPath = part.getDataLocation();
