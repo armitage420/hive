@@ -23,6 +23,7 @@ import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.utils.StringUtils;
 import org.apache.hadoop.hive.ql.ErrorMsg;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.thrift.TException;
 
 import static org.apache.hadoop.hive.ql.exec.repl.util.SnapshotUtils.NEW_SNAPSHOT;
 import static org.apache.hadoop.hive.ql.exec.repl.util.SnapshotUtils.OLD_SNAPSHOT;
@@ -78,7 +80,7 @@ public class ReplExternalTables {
    * It returns list of all the external table locations.
    */
   void dataLocationDump(Table table, FileList fileList, HashMap<String, Boolean> singleCopyPaths,
-      boolean isTableLevelReplication, HiveConf conf) throws IOException, HiveException {
+      boolean isTableLevelReplication, HiveConf conf) throws IOException, HiveException, TException {
     if (!shouldWrite()) {
       return;
     }
@@ -98,8 +100,15 @@ public class ReplExternalTables {
     if (table.isPartitioned()) {
       List<Partition> partitions;
       try {
-        partitions = Hive.get(hiveConf).getPartitions(table);
-      } catch (HiveException e) {
+        GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(), null, null);
+        request.setCatName(table.getCatName());
+        request.setProjectionSpec(
+                new org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder()
+                .addProjectField("catName").addProjectField("tableName")
+                .addProjectField("dbName").addProjectField("sd.location").build());
+//        partitions = Hive.get(hiveConf).getPartitions(table);
+        partitions = Hive.get(hiveConf).getPartitionsWithSpecs(table, request);
+      } catch (HiveException | TException e) {
         if (e.getCause() instanceof NoSuchObjectException) {
           // If table is dropped when dump in progress, just skip partitions data location dump
           LOG.debug(e.getMessage());
