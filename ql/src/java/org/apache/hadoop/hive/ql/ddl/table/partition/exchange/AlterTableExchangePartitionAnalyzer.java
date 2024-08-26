@@ -46,6 +46,8 @@ import org.apache.hadoop.hive.ql.parse.HiveParser;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.thrift.TException;
 
+import static org.apache.hadoop.hive.metastore.api.PartitionFilterMode.BY_VALUES;
+
 /**
  * Analyzer for exchange partition commands.
  */
@@ -95,6 +97,7 @@ public  class AlterTableExchangePartitionAnalyzer extends AbstractAlterTableAnal
             .addProjectField("lastAccessTime").addProjectField("sd.location").build());
     GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
     getPartitionsFilterSpec.setFilters(projectFilters);
+    getPartitionsFilterSpec.setFilterMode(PartitionFilterMode.BY_VALUES);
     request.setFilterSpec(getPartitionsFilterSpec);
     try {
       db.getPartitionsWithSpecs(sourceTable, request);
