@@ -180,7 +180,7 @@ public class UpgradeTool {
    * todo: change script comments to a preamble instead of a footer
    */
   private void performUpgradeInternal(String scriptLocation, boolean execute)
-      throws HiveException, TException, IOException {
+      throws HiveException, TException, IOException, MetastoreException {
     HiveConf conf = hiveConf != null ? hiveConf : new HiveConf();
     boolean isAcidEnabled = isAcidEnabled(conf);
     IMetaStoreClient hms = getHMS(conf);
@@ -552,17 +552,17 @@ public class UpgradeTool {
       int numWholeBatches = partNames.size()/batchSize;
       for(int i = 0; i < numWholeBatches; i++) {
         List<String> partNamesSubList = partNames.subList(i * batchSize, (i + 1) * batchSize);
-//        List<Partition> partitionList = hms.getPartitionsByNames(t.getDbName(), t.getTableName(),
-//            partNames.subList(i * batchSize, (i + 1) * batchSize));
+        List<Partition> partitionList = hms.getPartitionsByNames(t.getDbName(), t.getTableName(),
+            partNames.subList(i * batchSize, (i + 1) * batchSize));
 
-        GetProjectionsSpec getProjectionsSpec = new GetPartitionProjectionsSpecBuilder()
-                .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
-                .addProjectField("sd.location").build();
-        GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
-        getPartitionsFilterSpec.setFilters(partNamesSubList);
-        getPartitionsFilterSpec.setFilterMode(PartitionFilterMode.BY_NAMES);
-        GetPartitionsRequest request = new GetPartitionsRequest(t.getDbName(), t.getTableName(), getProjectionsSpec, getPartitionsFilterSpec);
-        List<Partition> partitionList = MetaStoreServerUtils.getPartitionsByProjectSpec(hms, request);
+//        GetProjectionsSpec getProjectionsSpec = new GetPartitionProjectionsSpecBuilder()
+//                .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+//                .addProjectField("sd.location").build();
+//        GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
+//        getPartitionsFilterSpec.setFilters(partNamesSubList);
+//        getPartitionsFilterSpec.setFilterMode(PartitionFilterMode.BY_NAMES);
+//        GetPartitionsRequest request = new GetPartitionsRequest(t.getDbName(), t.getTableName(), getProjectionsSpec, getPartitionsFilterSpec);
+//        List<Partition> partitionList = MetaStoreServerUtils.getPartitionsByProjectSpec(hms, request);
 
         for(Partition part : partitionList) {
           handleRenameFiles(t, new Path(part.getSd().getLocation()), execute, db.getConf(),
@@ -571,18 +571,18 @@ public class UpgradeTool {
       }
       if(numWholeBatches * batchSize < partNames.size()) {
         //last partial batch
-//        List<Partition> partitionList = hms.getPartitionsByNames(t.getDbName(), t.getTableName(),
-//            partNames.subList(numWholeBatches * batchSize, partNames.size()));
+        List<Partition> partitionList = hms.getPartitionsByNames(t.getDbName(), t.getTableName(),
+            partNames.subList(numWholeBatches * batchSize, partNames.size()));
 
-        List<String> partNamesSubList = partNames.subList(numWholeBatches * batchSize, partNames.size());
-        GetProjectionsSpec getProjectionsSpec = new GetPartitionProjectionsSpecBuilder()
-                .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
-                .addProjectField("sd.location").build();
-        GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
-        getPartitionsFilterSpec.setFilters(partNamesSubList);
-        getPartitionsFilterSpec.setFilterMode(PartitionFilterMode.BY_NAMES);
-        GetPartitionsRequest request = new GetPartitionsRequest(t.getDbName(), t.getTableName(), getProjectionsSpec, getPartitionsFilterSpec);
-        List<Partition> partitionList = MetaStoreServerUtils.getPartitionsByProjectSpec(hms, request);
+//        List<String> partNamesSubList = partNames.subList(numWholeBatches * batchSize, partNames.size());
+//        GetProjectionsSpec getProjectionsSpec = new GetPartitionProjectionsSpecBuilder()
+//                .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+//                .addProjectField("sd.location").build();
+//        GetPartitionsFilterSpec getPartitionsFilterSpec = new GetPartitionsFilterSpec();
+//        getPartitionsFilterSpec.setFilters(partNamesSubList);
+//        getPartitionsFilterSpec.setFilterMode(PartitionFilterMode.BY_NAMES);
+//        GetPartitionsRequest request = new GetPartitionsRequest(t.getDbName(), t.getTableName(), getProjectionsSpec, getPartitionsFilterSpec);
+//        List<Partition> partitionList = MetaStoreServerUtils.getPartitionsByProjectSpec(hms, request);
 
         for(Partition part : partitionList) {
           handleRenameFiles(t, new Path(part.getSd().getLocation()), execute, db.getConf(),
