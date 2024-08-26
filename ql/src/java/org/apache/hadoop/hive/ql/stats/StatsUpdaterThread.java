@@ -41,15 +41,8 @@ import org.apache.hadoop.hive.metastore.ObjectStore;
 import org.apache.hadoop.hive.metastore.RawStore;
 import org.apache.hadoop.hive.metastore.RawStoreProxy;
 import org.apache.hadoop.hive.metastore.Warehouse;
-import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
-import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.GetValidWriteIdsRequest;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.NoSuchTxnException;
-import org.apache.hadoop.hive.metastore.api.Partition;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.*;
+import org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf.ConfVars;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf.StatsUpdateMode;
@@ -61,6 +54,7 @@ import org.apache.hadoop.hive.ql.DriverUtils;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -332,11 +326,19 @@ public class StatsUpdaterThread extends Thread implements MetaStoreThread {
         nextBatchStart = nextBatchEnd;
         try {
 //          currentBatch = rs.getPartitionsByNames(cat, db, tbl, currentNames);
-          currentBatch = rs.getPartitionSpecsByFilterAndProjection(tbl, )
+          GetProjectionsSpec projectionsSpec = new GetPartitionProjectionsSpecBuilder()
+                  .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+                  .addProjectField("values").addProjectField("parameters").addProjectField("writeId")
+                  .build();
+          GetPartitionsFilterSpec partitionsFilterSpec = new GetPartitionsFilterSpec();
+          partitionsFilterSpec.setFilters(currentNames);
+          partitionsFilterSpec.setFilterMode(PartitionFilterMode.BY_NAMES);
+          currentBatch = rs.getPartitionSpecsByFilterAndProjection(t, projectionsSpec, partitionsFilterSpec);
         } catch (NoSuchObjectException e) {
           LOG.error("Failed to get partitions for " + fullTableName + ", skipping some partitions", e);
           currentBatch = null;
           continue;
+        } catch (TException e) {
         }
         nextIxInBatch = 0;
       }
