@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.ddl.DDLWork;
@@ -137,7 +138,15 @@ public class LoadPartitions {
         if (tablesToBootstrap.stream().anyMatch(table.getTableName()::equalsIgnoreCase)) {
           Hive hiveDb = Hive.get(context.hiveConf);
           // Collect the non-existing partitions to drop.
-          List<Partition> partitions = hiveDb.getPartitions(table);
+          org.apache.hadoop.hive.metastore.api.GetPartitionsRequest request = new GetPartitionsRequest(
+                  table.getDbName(), table.getTableName(), null, null);
+          request.setCatName(table.getCatName());
+          request.setProjectionSpec(
+                  new org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder()
+                          .addProjectField("catName").addProjectField("tableName").addProjectField("dbName")
+                          .addProjectField("values").build());
+          List<Partition> partitions = hiveDb.getPartitionsWithSpecs(table, request);
+//          List<Partition> partitions = hiveDb.getPartitions(table);
           List<String> newParts = event.partitions(tableDesc);
           for (Partition part : partitions) {
             if (!newParts.contains(part.getName())) {

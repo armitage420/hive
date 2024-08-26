@@ -331,7 +331,8 @@ public class StatsUpdaterThread extends Thread implements MetaStoreThread {
         currentBatchStart = nextBatchStart;
         nextBatchStart = nextBatchEnd;
         try {
-          currentBatch = rs.getPartitionsByNames(cat, db, tbl, currentNames);
+//          currentBatch = rs.getPartitionsByNames(cat, db, tbl, currentNames);
+          currentBatch = rs.getPartitionSpecsByFilterAndProjection(tbl, )
         } catch (NoSuchObjectException e) {
           LOG.error("Failed to get partitions for " + fullTableName + ", skipping some partitions", e);
           currentBatch = null;
