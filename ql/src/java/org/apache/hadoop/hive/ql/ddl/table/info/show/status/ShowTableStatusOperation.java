@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.udf.UDFLike;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.thrift.TException;
 
 /**
  * Operation process showing the table status.
@@ -48,7 +49,7 @@ public class ShowTableStatusOperation extends DDLOperation<ShowTableStatusDesc> 
   }
 
   @Override
-  public int execute() throws HiveException {
+  public int execute() throws HiveException, TException {
     List<Table> tables = new ArrayList<Table>();
     Map<String, String> partitionSpec = desc.getPartSpec();
     Partition partition = null;

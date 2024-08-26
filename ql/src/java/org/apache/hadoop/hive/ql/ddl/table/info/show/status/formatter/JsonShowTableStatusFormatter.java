@@ -28,6 +28,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.formatting.MapBuilder;
+import org.apache.thrift.TException;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -42,7 +43,7 @@ import java.util.Map;
 public class JsonShowTableStatusFormatter extends ShowTableStatusFormatter {
   @Override
   public void showTableStatus(DataOutputStream out, Hive db, HiveConf conf, List<Table> tables, Partition partition)
-      throws HiveException {
+      throws HiveException, TException {
     List<Map<String, Object>> tableData = new ArrayList<>();
     try {
       for (Table table : tables) {
@@ -55,7 +56,7 @@ public class JsonShowTableStatusFormatter extends ShowTableStatusFormatter {
   }
 
   private Map<String, Object> makeOneTableStatus(Table table, Hive db, HiveConf conf, Partition partition)
-      throws HiveException, IOException {
+      throws HiveException, IOException, TException {
     StorageInfo storageInfo = getStorageInfo(table, partition);
 
     MapBuilder builder = MapBuilder.create();

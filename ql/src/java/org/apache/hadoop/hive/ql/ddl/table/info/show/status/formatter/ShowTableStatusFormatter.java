@@ -22,11 +22,15 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.GetPartitionsRequest;
+import org.apache.hadoop.hive.metastore.api.GetProjectionsSpec;
+import org.apache.hadoop.hive.metastore.client.builder.GetPartitionProjectionsSpecBuilder;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +54,7 @@ public abstract class ShowTableStatusFormatter {
   }
 
   public abstract void showTableStatus(DataOutputStream out, Hive db, HiveConf conf, List<Table> tables, Partition par)
-      throws HiveException;
+      throws HiveException, TException;
 
   StorageInfo getStorageInfo(Table table, Partition partition) throws HiveException {
     String location = null;
@@ -85,11 +89,16 @@ public abstract class ShowTableStatusFormatter {
     }
   }
 
-  List<Path> getLocations(Hive db, Partition partition, Table table) throws HiveException {
+  List<Path> getLocations(Hive db, Partition partition, Table table) throws HiveException, TException {
     List<Path> locations = new ArrayList<Path>();
     if (table.isPartitioned()) {
       if (partition == null) {
-        for (Partition currPartition : db.getPartitions(table)) {
+        GetProjectionsSpec getProjectionsSpec = new GetPartitionProjectionsSpecBuilder()
+                .addProjectField("catName").addProjectField("dbName").addProjectField("tableName")
+                .addProjectField("sd.location").build();
+        GetPartitionsRequest request = new GetPartitionsRequest(table.getDbName(), table.getTableName(), getProjectionsSpec, null);
+        request.setCatName(table.getCatName());
+        for (Partition currPartition : db.getPartitionsWithSpecs(table, request)) {
           if (currPartition.getLocation() != null) {
             locations.add(new Path(currPartition.getLocation()));
           }

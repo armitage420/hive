@@ -26,6 +26,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.thrift.TException;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -39,7 +40,7 @@ import java.util.List;
 public class TextShowTableStatusFormatter extends ShowTableStatusFormatter {
   @Override
   public void showTableStatus(DataOutputStream out, Hive db, HiveConf conf, List<Table> tables, Partition partition)
-      throws HiveException {
+      throws HiveException, TException {
     try {
       for (Table table : tables) {
         writeBasicInfo(out, table);
@@ -85,7 +86,7 @@ public class TextShowTableStatusFormatter extends ShowTableStatusFormatter {
   }
 
   private void writeFileSystemInfo(DataOutputStream out, Hive db, HiveConf conf, Partition partition, Table table)
-      throws HiveException, IOException {
+      throws HiveException, IOException, TException {
     List<Path> locations = getLocations(db, partition, table);
     if (!locations.isEmpty()) {
       writeFileSystemStats(out, conf, locations, table.getPath());
