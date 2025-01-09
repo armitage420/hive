@@ -1,0 +1,142 @@
+PREHOOK: query: drop table if exists json_serde4_1
+PREHOOK: type: DROPTABLE
+PREHOOK: Output: database:default
+POSTHOOK: query: drop table if exists json_serde4_1
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Output: database:default
+PREHOOK: query: drop table if exists json_serde4_2
+PREHOOK: type: DROPTABLE
+PREHOOK: Output: database:default
+POSTHOOK: query: drop table if exists json_serde4_2
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Output: database:default
+PREHOOK: query: create table json_serde4_1 (tiny_value TINYINT, small_value SMALLINT, int_value INT, big_value BIGINT)
+  row format serde 'org.apache.hadoop.hive.serde2.JsonSerDe'
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@json_serde4_1
+POSTHOOK: query: create table json_serde4_1 (tiny_value TINYINT, small_value SMALLINT, int_value INT, big_value BIGINT)
+  row format serde 'org.apache.hadoop.hive.serde2.JsonSerDe'
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@json_serde4_1
+PREHOOK: query: insert into table json_serde4_1 values (128, 32768, 2147483648, 9223372036854775808)
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@json_serde4_1
+POSTHOOK: query: insert into table json_serde4_1 values (128, 32768, 2147483648, 9223372036854775808)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@json_serde4_1
+POSTHOOK: Lineage: json_serde4_1.big_value SCRIPT []
+POSTHOOK: Lineage: json_serde4_1.int_value SCRIPT []
+POSTHOOK: Lineage: json_serde4_1.small_value SCRIPT []
+POSTHOOK: Lineage: json_serde4_1.tiny_value SCRIPT []
+PREHOOK: query: insert into table json_serde4_1
+    select 128, 32768, 2147483648, 9223372036854775808
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@json_serde4_1
+POSTHOOK: query: insert into table json_serde4_1
+    select 128, 32768, 2147483648, 9223372036854775808
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@json_serde4_1
+POSTHOOK: Lineage: json_serde4_1.big_value EXPRESSION []
+POSTHOOK: Lineage: json_serde4_1.int_value EXPRESSION []
+POSTHOOK: Lineage: json_serde4_1.small_value EXPRESSION []
+POSTHOOK: Lineage: json_serde4_1.tiny_value EXPRESSION []
+PREHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/sampleJson.json' INTO TABLE json_serde4_1
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@json_serde4_1
+POSTHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/sampleJson.json' INTO TABLE json_serde4_1
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@json_serde4_1
+PREHOOK: query: select * from json_serde4_1
+PREHOOK: type: QUERY
+PREHOOK: Input: default@json_serde4_1
+#### A masked pattern was here ####
+POSTHOOK: query: select * from json_serde4_1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@json_serde4_1
+#### A masked pattern was here ####
+NULL	NULL	NULL	NULL
+NULL	NULL	NULL	NULL
+NULL	NULL	NULL	NULL
+PREHOOK: query: create table json_serde4_2 (tiny_value TINYINT, small_value SMALLINT, int_value INT, big_value BIGINT)
+  row format serde 'org.apache.hive.hcatalog.data.JsonSerDe'
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@json_serde4_2
+POSTHOOK: query: create table json_serde4_2 (tiny_value TINYINT, small_value SMALLINT, int_value INT, big_value BIGINT)
+  row format serde 'org.apache.hive.hcatalog.data.JsonSerDe'
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@json_serde4_2
+PREHOOK: query: insert into table json_serde4_2 values (128, 32768, 2147483648, 9223372036854775808)
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@json_serde4_2
+POSTHOOK: query: insert into table json_serde4_2 values (128, 32768, 2147483648, 9223372036854775808)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@json_serde4_2
+POSTHOOK: Lineage: json_serde4_2.big_value SCRIPT []
+POSTHOOK: Lineage: json_serde4_2.int_value SCRIPT []
+POSTHOOK: Lineage: json_serde4_2.small_value SCRIPT []
+POSTHOOK: Lineage: json_serde4_2.tiny_value SCRIPT []
+PREHOOK: query: insert into table json_serde4_2
+    select 128, 32768, 2147483648, 9223372036854775808
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@json_serde4_2
+POSTHOOK: query: insert into table json_serde4_2
+    select 128, 32768, 2147483648, 9223372036854775808
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@json_serde4_2
+POSTHOOK: Lineage: json_serde4_2.big_value EXPRESSION []
+POSTHOOK: Lineage: json_serde4_2.int_value EXPRESSION []
+POSTHOOK: Lineage: json_serde4_2.small_value EXPRESSION []
+POSTHOOK: Lineage: json_serde4_2.tiny_value EXPRESSION []
+PREHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/sampleJson.json' INTO TABLE json_serde4_2
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@json_serde4_2
+POSTHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/sampleJson.json' INTO TABLE json_serde4_2
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@json_serde4_2
+PREHOOK: query: select * from json_serde4_2
+PREHOOK: type: QUERY
+PREHOOK: Input: default@json_serde4_2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from json_serde4_2
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@json_serde4_2
+#### A masked pattern was here ####
+NULL	NULL	NULL	NULL
+NULL	NULL	NULL	NULL
+NULL	NULL	NULL	NULL
+PREHOOK: query: drop table json_serde4_1
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@json_serde4_1
+PREHOOK: Output: database:default
+PREHOOK: Output: default@json_serde4_1
+POSTHOOK: query: drop table json_serde4_1
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@json_serde4_1
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@json_serde4_1
+PREHOOK: query: drop table json_serde4_2
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@json_serde4_2
+PREHOOK: Output: database:default
+PREHOOK: Output: default@json_serde4_2
+POSTHOOK: query: drop table json_serde4_2
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@json_serde4_2
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@json_serde4_2

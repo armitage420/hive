@@ -146,6 +146,10 @@ public class UDFToInteger extends UDF {
     if (i == null) {
       return null;
     } else {
+      long value = i.get();
+      if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+        return null;
+      }
       intWritable.set((int) i.get());
       return intWritable;
     }

@@ -128,6 +128,10 @@ public class UDFToShort extends UDF {
     if (i == null) {
       return null;
     } else {
+      int value = i.get();
+      if (value < Short.MIN_VALUE || value > Short.MAX_VALUE) {
+        return null;
+      }
       shortWritable.set((short) i.get());
       return shortWritable;
     }

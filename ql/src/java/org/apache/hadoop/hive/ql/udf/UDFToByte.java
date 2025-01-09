@@ -128,6 +128,13 @@ public class UDFToByte extends UDF {
     if (i == null) {
       return null;
     } else {
+      int value = i.get();
+      if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
+        // returning null for value out of bound for byte
+        // throwing an error was another solution for the same
+        // return type is more consistent with evaluate(Text i) method when it throws a NumberFormatException
+        return null;
+      }
       byteWritable.set((byte) i.get());
       return byteWritable;
     }

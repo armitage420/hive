@@ -388,60 +388,65 @@ public class HiveJsonReader {
       Preconditions.checkArgument(leafNode.getNodeType() != JsonNodeType.ARRAY);
     }
 
-    switch (typeInfo.getPrimitiveCategory()) {
-    case INT:
-      return Integer.valueOf(leafNode.asInt());
-    case BYTE:
-      return Byte.valueOf((byte) leafNode.asInt());
-    case SHORT:
-      return Short.valueOf((short) leafNode.asInt());
-    case LONG:
-      return Long.valueOf(leafNode.asLong());
-    case BOOLEAN:
-      if ("false".equalsIgnoreCase(leafNode.asText())) {
-        return Boolean.FALSE;
-      } else {
-        return Boolean.valueOf(leafNode.asBoolean(true));
-      }
-    case FLOAT:
-      return Float.valueOf((float) leafNode.asDouble());
-    case DOUBLE:
-      return Double.valueOf(leafNode.asDouble());
-    case STRING:
-      if (leafNode.isValueNode()) {
-        return leafNode.asText();
-      } else {
-        if (isEnabled(Feature.STRINGIFY_COMPLEX_FIELDS)) {
-          return leafNode.toString();
-        } else {
+    try {
+      switch (typeInfo.getPrimitiveCategory()) {
+        case INT:
+          return Integer.valueOf(leafNode.asText());
+        case BYTE:
+          return Byte.valueOf(leafNode.asText());
+        case SHORT:
+          return Short.valueOf(leafNode.asText());
+        case LONG:
+          return Long.valueOf(leafNode.asText());
+        case BOOLEAN:
+          if ("false".equalsIgnoreCase(leafNode.asText())) {
+            return Boolean.FALSE;
+          } else {
+            return Boolean.valueOf(leafNode.asBoolean(true));
+          }
+        case FLOAT:
+          return Float.valueOf((float) leafNode.asDouble());
+        case DOUBLE:
+          return Double.valueOf(leafNode.asDouble());
+        case STRING:
+          if (leafNode.isValueNode()) {
+            return leafNode.asText();
+          } else {
+            if (isEnabled(Feature.STRINGIFY_COMPLEX_FIELDS)) {
+              return leafNode.toString();
+            } else {
+              throw new SerDeException(
+                      "Complex field found in JSON does not match table definition: " + typeInfo.getTypeName()
+                              + ", please consider enabling `" + JsonSerDe.STRINGIFY_COMPLEX + "` table property");
+            }
+          }
+        case BINARY:
+          return getByteValue(leafNode);
+        case DATE:
+          return Date.valueOf(leafNode.asText());
+        case TIMESTAMP:
+          return tsParser.parseTimestamp(leafNode.asText());
+        case DECIMAL:
+          return HiveDecimal.create(leafNode.asText());
+        case TIMESTAMPLOCALTZ:
+          final Timestamp ts = tsParser.parseTimestamp(leafNode.asText());
+          final ZoneId zid = ((TimestampLocalTZTypeInfo) typeInfo).timeZone();
+          final TimestampTZ tstz = new TimestampTZ();
+          tstz.set(ts.toEpochSecond(), ts.getNanos(), zid);
+          return tstz;
+        case VARCHAR:
+          return new HiveVarchar(leafNode.asText(),
+                  ((BaseCharTypeInfo) typeInfo).getLength());
+        case CHAR:
+          return new HiveChar(leafNode.asText(),
+                  ((BaseCharTypeInfo) typeInfo).getLength());
+        default:
           throw new SerDeException(
-              "Complex field found in JSON does not match table definition: " + typeInfo.getTypeName()
-                  + ", please consider enabling `" + JsonSerDe.STRINGIFY_COMPLEX + "` table property");
-        }
+                  "Could not convert from string to type: " + typeInfo.getTypeName());
       }
-    case BINARY:
-      return getByteValue(leafNode);
-    case DATE:
-      return Date.valueOf(leafNode.asText());
-    case TIMESTAMP:
-      return tsParser.parseTimestamp(leafNode.asText());
-    case DECIMAL:
-      return HiveDecimal.create(leafNode.asText());
-    case TIMESTAMPLOCALTZ:
-      final Timestamp ts = tsParser.parseTimestamp(leafNode.asText());
-      final ZoneId zid = ((TimestampLocalTZTypeInfo) typeInfo).timeZone();
-      final TimestampTZ tstz = new TimestampTZ();
-      tstz.set(ts.toEpochSecond(), ts.getNanos(), zid);
-      return tstz;
-    case VARCHAR:
-      return new HiveVarchar(leafNode.asText(),
-          ((BaseCharTypeInfo) typeInfo).getLength());
-    case CHAR:
-      return new HiveChar(leafNode.asText(),
-          ((BaseCharTypeInfo) typeInfo).getLength());
-    default:
-      throw new SerDeException(
-          "Could not convert from string to type: " + typeInfo.getTypeName());
+    } catch (NumberFormatException e) {
+      // UDFs for byte, short, int, and long handle this exception by returning null. Hence, maintaining consistency.
+      return null;
     }
   }
 
