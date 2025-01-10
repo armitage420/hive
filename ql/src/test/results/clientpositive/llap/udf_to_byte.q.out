@@ -33,7 +33,7 @@ POSTHOOK: query: SELECT CAST(-129 AS TINYINT) FROM src tablesample (1 rows)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
 #### A masked pattern was here ####
-127
+NULL
 PREHOOK: query: SELECT CAST(CAST(-1025 AS BIGINT) AS TINYINT) FROM src tablesample (1 rows)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
